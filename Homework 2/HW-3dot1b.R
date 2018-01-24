@@ -8,6 +8,8 @@
 library(kknn)
 
 rm(list = ls())
+cat("\014")
+set.seed(1)
 
 mydata = data.frame(read.csv("credit_card_data.csv", header = FALSE)) #read in data
 
@@ -19,7 +21,7 @@ count = 1
 
 for (x in 1:nrow(mydata)) {
   #using rotation to put the 80% of the data into a training set and 10% each into validation and testing sets
-  df = mydata[x,]
+  df = mydata[x, ]
   if (count >= 11) {
     count = 1
   }
@@ -44,7 +46,7 @@ for (y in steps) {
   for (x in 1:nrow(validation)) {
     knn = kknn(V11 ~ .,
                training,
-               validation[x,],
+               validation[x, ],
                k = y,
                scale = TRUE)
     class = round(fitted(knn), 0)
@@ -65,7 +67,7 @@ answerx = matrix(, nrow = nrow(test), ncol = 1)
 for (x in 1:nrow(test)) {
   knn = kknn(V11 ~ .,
              training,
-             test[x,],
+             test[x, ],
              k = Best_K_Value_validation,
              scale = TRUE)
   class = round(fitted(knn), 0)

@@ -1,0 +1,133 @@
+> set.seed(1)
+> 
+> mydata = data.frame(read.csv("iris.csv", header = TRUE)) #read in data
+> response = data.frame(mydata[, 6])
+> training = data.matrix(mydata[, 2:5])
+> 
+> 
+> #Need to scale the data
+> sc_train = training
+> for (i in 1:4) {
++   sc_train[, i] = (training[, i] - min(training[, i])) / (max(training[, i]) -
++                                                             min(training[, i]))
++ }
+> 
+> #Run clustering with all 4 predictors.  "1" cluster isn't really applicable, but it helps with the for loop:
+> clusters = seq(1, 10)
+> resp = matrix(, nrow = nrow(sc_train), ncol = length(clusters))
+> distance = matrix(, nrow = length(clusters), 1)
+> y = 1
+> for (x in clusters) {
++   km = kmeans(sc_train, x, nstart = 20)
++   resp[, x] = km$cluster
++   distance[x,] = km$tot.withinss
++   
++ }
+> 
+> 
+> #Comparing the clusters with the known species (though we wouldn't know the actual answer in real life clustering situations)
+> table(resp[, 2], mydata$Species)
+   
+    setosa versicolor virginica
+  1      0         50        50
+  2     50          0         0
+> table(resp[, 3], mydata$Species)
+   
+    setosa versicolor virginica
+  1      0          1        29
+  2     50          0         0
+  3      0         49        21
+> table(resp[, 4], mydata$Species)
+   
+    setosa versicolor virginica
+  1      0          8        20
+  2      0          1        29
+  3      0         41         1
+  4     50          0         0
+> table(resp[, 5], mydata$Species)
+   
+    setosa versicolor virginica
+  1      0          0        19
+  2      0          1        29
+  3      0         20         1
+  4     50          0         0
+  5      0         29         1
+> table(resp[, 6], mydata$Species)
+   
+    setosa versicolor virginica
+  1      0         29         1
+  2      0          0        19
+  3     26          0         0
+  4      0         20         1
+  5     24          0         0
+  6      0          1        29
+> table(resp[, 7], mydata$Species)
+   
+    setosa versicolor virginica
+  1     26          0         0
+  2      0         29         1
+  3      0          1        13
+  4     24          0         0
+  5      0          0        17
+  6      0         20         0
+  7      0          0        19
+> 
+> #Using all four measurements as predictors doesn't really seem to give us much useful information.
+> #We can keep adding clusters and the clusters will mostly get smaller, but it doesn't actually pertain to much,
+> #since we have the real data to compare it to.
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 7])) + geom_point()
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 7])) + geom_point()
+> 
+> # Plotting out the data vs the known responses shows that the Sepal measurements do not provide a good grouping,
+> # but the Petal measurements are excellent.  We will redo the previous model creation with only these two predictors.
+> # We will also only use up to 5 clusters
+> ggplot(mydata, aes(Sepal.Length, Sepal.Width, color = Species)) + geom_point()
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = Species)) + geom_point()
+> ggsave(
++   "Real Response.jpeg",
++   width = 6,
++   height = 4,
++   units = c("in")
++ )
+> #Run clustering with all 4 predictors.  "1" cluster isn't really applicable, but it helps with the for loop:
+> clusters = seq(1, 5)
+> resp1 = matrix(, nrow = nrow(sc_train), ncol = length(clusters))
+> distance1 = matrix(, nrow = length(clusters), 1)
+> y = 1
+> for (x in clusters) {
++   km = kmeans(sc_train[, 3:4], x, nstart = 20)
++   resp1[, x] = km$cluster
++   distance1[x,] = km$tot.withinss
++ }
+> 
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp1[, 2])) + geom_point()
+> ggsave(
++   "2 Clusters.jpeg",
++   width = 6,
++   height = 4,
++   units = c("in")
++ )
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp1[, 3])) + geom_point()
+> ggsave(
++   "3 Clusters.jpeg",
++   width = 6,
++   height = 4,
++   units = c("in")
++ )
+> ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp1[, 4])) + geom_point()
+> ggsave(
++   "4 Clusters.jpeg",
++   width = 6,
++   height = 4,
++   units = c("in")
++ )
+> 
+> table(resp1[, 3], mydata$Species)
+   
+    setosa versicolor virginica
+  1     50          0         0
+  2      0          2        46
+  3      0         48         4
+> 
+> # As expected, the 3 Cluster solution best matches the actual data, but has 2
+> # versicolor flowers misclassified and 4 virginica flowers misclassified.

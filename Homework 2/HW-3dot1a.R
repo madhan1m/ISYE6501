@@ -5,10 +5,11 @@
 #Part 3.1a
 
 #install.packages("kknn")
-rm(list = ls())
-
-
 library(kknn)
+
+rm(list = ls())
+cat("\014")
+set.seed(1)
 
 mydata = data.frame(read.csv("credit_card_data.csv", header = FALSE)) #read in data
 groups = 10 #10 groups
@@ -24,8 +25,8 @@ for (y in seq(1, groups)) {
   if (y == groups) {
     stop = nrow(mydata) #So the last group will include any remainder rows
   }
-  training = mydata[-(start:stop), ] #selects all data except the kth group for training
-  validation = mydata[(start:stop), ]  #selects the kth group of data for the validation data
+  training = mydata[-(start:stop),] #selects all data except the kth group for training
+  validation = mydata[(start:stop),]  #selects the kth group of data for the validation data
   z = 1
   for (i in steps) {
     #second loop to iterate through neighbor values
@@ -34,7 +35,7 @@ for (y in seq(1, groups)) {
       #inner loop to sweep through data set
       knn = kknn(V11 ~ .,
                  training,
-                 validation[x, ],
+                 validation[x,],
                  k = i,
                  scale = TRUE)
       class = round(fitted(knn), 0)
@@ -53,8 +54,9 @@ Best_K_Value
 
 answer_final = matrix(, nrow(mydata), ncol = 1)
 
-for (x in 1:nrow(mydata)) { #Re-run the chosen model (k-value) on the entire data set to get the accuracy.
-  knn = kknn(V11 ~ ., mydata[-x, ], mydata[x, ],
+for (x in 1:nrow(mydata)) {
+  #Re-run the chosen model (k-value) on the entire data set to get the accuracy.
+  knn = kknn(V11 ~ ., mydata[-x,], mydata[x,],
              k = Best_K_Value,
              scale = TRUE)
   class = round(fitted(knn), 0)

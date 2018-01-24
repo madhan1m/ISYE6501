@@ -33,7 +33,7 @@ y = 1
 for (x in clusters) {
   km = kmeans(sc_train, x, nstart = 20)
   resp[, x] = km$cluster
-  distance[x, ] = km$tot.withinss
+  distance[x,] = km$tot.withinss
   
 }
 
@@ -49,8 +49,8 @@ table(resp[, 7], mydata$Species)
 #Using all four measurements as predictors doesn't really seem to give us much useful information.
 #We can keep adding clusters and the clusters will mostly get smaller, but it doesn't actually pertain to much,
 #since we have the real data to compare it to.
-ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 4])) + geom_point()
-ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 4])) + geom_point()
+ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 7])) + geom_point()
+ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp[, 7])) + geom_point()
 
 # Plotting out the data vs the known responses shows that the Sepal measurements do not provide a good grouping,
 # but the Petal measurements are excellent.  We will redo the previous model creation with only these two predictors.
@@ -71,12 +71,8 @@ y = 1
 for (x in clusters) {
   km = kmeans(sc_train[, 3:4], x, nstart = 20)
   resp1[, x] = km$cluster
-  distance1[x, ] = km$tot.withinss
+  distance1[x,] = km$tot.withinss
 }
-
-table(resp1[, 2], mydata$Species)
-table(resp1[, 3], mydata$Species)
-table(resp1[, 4], mydata$Species)
 
 ggplot(mydata, aes(Petal.Length, Petal.Width, color = resp1[, 2])) + geom_point()
 ggsave(
@@ -99,6 +95,8 @@ ggsave(
   height = 4,
   units = c("in")
 )
+
+table(resp1[, 3], mydata$Species)
 
 # As expected, the 3 Cluster solution best matches the actual data, but has 2
 # versicolor flowers misclassified and 4 virginica flowers misclassified.
