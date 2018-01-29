@@ -1,0 +1,78 @@
+#Bryson Cook
+#ISYE6501, Spring 2018
+#Homework 3
+
+#Part 5.1
+rm(list = ls())
+cat("\014")
+set.seed(1)
+
+#install.packages("outliers")
+library(outliers)
+
+mydata = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+sort = t(mydata$Crime[order(mydata$Crime)]) #sort the Crime data for easier plotting
+
+plot(seq(1:length(mydata$Crime)),
+     mydata$Crime,
+     xlab = "Index",
+     ylab = "Crime Rate") #Plots the crime data
+plot(seq(1:length(sort)), sort, xlab = "Sorted Index", ylab = "Crime Rate") #Plots the sorted crime data
+
+# When sorting the data into ascending order and plotting, it does not appear like the lowest crime rate
+# is an outler.  However,there are some outliers at the highest crime levels, though it is not certain particularly which.
+# 1969 and 1993 are the highest crime rates, and are well above the next highest rate (1674).  However, since
+# it is not a single outlier, it should probably be investigated.  However, one could also state that
+#the tope 5 results are outliers from the rest, as there is a large gap between nums 42 and 45 (1272 vs 1555).
+
+Crime = mydata$Crime #Creating a vector of the Crime data
+Crime_sc = scale(Crime)
+# for (i in 1:length(Crime)) {
+#   Crime_sc[, i] = (Crime[, i] - min(Crime)) / (max(Crime) -
+#                                                  min(Crime))
+# }
+qqnorm(Crime_sc) # Check if data follows a normal distribution, which is required for the Grubbs Test.  It is close.
+
+#Iterate throught the high end to see which of the items are considered outliers.
+outliers = 8
+pvalues_high = matrix(, outliers, 2)
+list = sort
+for (x in seq(1:outliers)) {
+  g = grubbs.test(list,
+                  type = 10,
+                  opposite = FALSE,
+                  two.sided = FALSE)
+  pvalues_high[x, 1] = list[length(list)]
+  pvalues_high[x, 2] = g$p.value
+  if (pvalues_high[x, 2] == 1) {
+    #if the point is not an outlier, break the for loop.
+    break
+  }
+  list = list[1:(length(list) - 1)] #if the point is an outlier, remove it from the data.
+}
+
+print(pvalues_high)
+# Since pvalue = 1.0 for the 6th value, this mean that that index is not considered an outlier,
+# but the top 5 values are considered outliers.  However, as I said above since there are 5 total point
+# in what appears to be 2 clusters, in a real problem we should inspect these points further for why they
+# are outliers in case there is some deeper meaning.
+
+# We now need to check the low end.  Start with the resultant list without the upper end outliers.
+
+pvalues_low = matrix(, outliers, 2)
+for (x in seq(1:outliers)) {
+  g = grubbs.test(list,
+                  type = 10,
+                  opposite = TRUE,
+                  two.sided = FALSE)
+  pvalues_low[x, 1] = list[1]
+  pvalues_low[x, 2] = g$p.value
+  if (pvalues_low[x, 2] == 1) {
+    #if the point is not an outlier, break the for loop.
+    break
+  }
+  list = list[2:length(list)] #if the point is an outlier, remove it from the data.
+}
+print(pvalues_low)
+
+# The first point's pvalue equals 1, meaning no points were determined to be outliers and no data was removed.
