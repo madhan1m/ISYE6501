@@ -1,0 +1,71 @@
+
+> set.seed(1)
+
+> #install.packages("outliers")
+> library(outliers)
+
+> mydata = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+
+> sort = t(mydata$Crime[order(mydata$Crime)]) #sort the Crime data for easier plotting
+
+> plot(seq(1:length(mydata$Crime)),
++      mydata$Crime,
++      xlab = "Index",
++      ylab = "Crime Rate") #Plots the crime data
+
+> plot(seq(1:length(sort)), sort, xlab = "Sorted Index", ylab = "Crime Rate") #Plots the sorted crime data
+
+> # When sorting the data into ascending order and plotting, it does not appear like the lowest crime rate
+> # is an outler.  However,there are some o .... [TRUNCATED] 
+
+> Crime_sc = scale(Crime)
+
+> # for (i in 1:length(Crime)) {
+> #   Crime_sc[, i] = (Crime[, i] - min(Crime)) / (max(Crime) -
+> #                                                   .... [TRUNCATED] 
+
+> #Iterate throught the high end to see which of the items are considered outliers.
+> outliers = 8
+
+> pvalues_high = matrix(, outliers, 2)
+
+> list = sort
+
+> for (x in seq(1:outliers)) {
++   g = grubbs.test(list,
++                   type = 10,
++                   opposite = FALSE,
++                   two. .... [TRUNCATED] 
+
+> print(pvalues_high)
+     [,1]       [,2]
+[1,] 1993 0.07887486
+[2,] 1969 0.02847821
+[3,] 1674 0.17807968
+[4,] 1635 0.11389923
+[5,] 1555 0.10815574
+[6,] 1272 1.00000000
+[7,]   NA         NA
+[8,]   NA         NA
+
+> # Since pvalue = 1.0 for the 6th value, this mean that that index is not considered an outlier,
+> # but the top 5 values are considered outliers.  H .... [TRUNCATED] 
+
+> for (x in seq(1:outliers)) {
++   g = grubbs.test(list,
++                   type = 10,
++                   opposite = TRUE,
++                   two.s .... [TRUNCATED] 
+
+> print(pvalues_low)
+     [,1] [,2]
+[1,]  342    1
+[2,]   NA   NA
+[3,]   NA   NA
+[4,]   NA   NA
+[5,]   NA   NA
+[6,]   NA   NA
+[7,]   NA   NA
+[8,]   NA   NA
+
+> # The first point's pvalue equals 1, meaning no points were determined to be outliers and no data was removed.
