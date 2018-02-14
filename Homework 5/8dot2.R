@@ -8,17 +8,37 @@ cat("\014")
 set.seed(1)
 
 #install.packages("stats")
+#install.packages("DAAG")
 library(stats)
+library(DAAG)
 
 input = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
 mydata = input[c(16, 1:15)] #reorder so that crime is the first column (for formula)
 
-#Scale the data
-scaled_data = mydata
-for (i in 1:16) {
-  scaled_data[, i] = (mydata[, i] - min(mydata[, i])) / (max(mydata[, i]) -
-                                                           min(mydata[, i]))
+# Plot predictors vs. response
+predictors = mydata[-1]
+headers = list(
+  "M",
+  "So",
+  "Ed",
+  "Po1",
+  "Po2",
+  "LF",
+  "M.F",
+  "Pop",
+  "NW",
+  "U1",
+  "U2",
+  "Wealth",
+  "Ineq",
+  "Prob",
+  "Time"
+)
+par(mfrow = c(4, 4))
+for (i in 1:15) {
+  plot(predictors[, i], mydata$Crime, xlab = headers[i])
 }
+
 
 point = data.frame(
   M = 14.0,
@@ -37,69 +57,65 @@ point = data.frame(
   Prob = 0.04,
   Time = 39.0
 )
-scaled_point = point
 
 
-for (i in 1:15) {
-  scaled_point[1, i] = (point[1, i] -min(mydata[, i + 1])) / (max(mydata[, i +1]) -min(mydata[, i +1]))}
+f = formula(mydata)
+model1 = lm(f, mydata)
+summary(model1)
+par(mfrow = c(2, 2))
+plot(model1)
 
-f = formula(scaled_data)
-sc_reg = lm(f, scaled_data)
-summary(sc_reg)
-
-
-crime_prediction = (predict.lm(sc_reg,scaled_point) * (max(mydata[, "Crime"]) - min(mydata[, "Crime"]))) +
-  min(mydata[, "Crime"])
-#that answer of 155 is really low, we are probably overfit, so le's look at the p-values of each point. 
+crime_prediction = predict.lm(model1, point)
+crime_prediction
+#that answer of 155 is really low, we are probably overfit, so let's look at the p-values of each point.
 
 
-sc_Pvalues = summary(sc_reg)$coefficients[,4]
-sc_coef = sc_reg$coefficients
+Pvalues = summary(model1)$coefficients[, 4]
+coef = model1$coefficients
 
 
-# Eliminate those predictors with a p-value > 0.06.  I know  0.05 is usually the rule, 
-# but the U2 factor (unemployment rate of urban males 35-39) has a P value just above .05
-# and should be left in.
-#This is done easiest by setting the entire column = 0, so it has no impact
-scaled_data_adj = scaled_data
-
+# Eliminate those predictors with a p-value > 0.08.  I know  0.05 is usually the rule,
+# but the U2 factor (unemployment rate of urban males 35-39) and Po1
+# should be left in as it was considered important by the summary() function.
+mydata_fit = mydata[1]
+n = 2
 for (i in 2:16) {
-  if (sc_Pvalues[i] > 0.06) {
-    scaled_data_adj[,i] = 0
+  if (Pvalues[i] < 0.08) {
+    mydata_fit[n] = mydata[i]
+    n = n + 1
   }
 }
 
-#
-# for (i in (
-#   "M",
-#   "So",
-#   "Ed",
-#   "Po1",
-#   "Po2",
-#   "LF",
-#   "M.F",
-#   "Pop",
-#   "NW",
-#   "U1",
-#   "U2",
-#   "Wealth",
-#   "Ineq",
-#   "Prob",
-#   "Time"
-# )) {
-#   if (sc_Pvalues[i] > 0.06) {
-#     scaled_data_adj[, i] = 0
-#   }
-# }
-
-# sc_a_0 = matrix(sc_coef_adj[1])
-# sc_a_n = matrix(sc_coef_adj[2:16])
-sc_reg_adj = lm(f, scaled_data_adj)
-summary(sc_reg_adj)
+f_adj = formula(mydata_fit)
+model2 = lm(f_adj, mydata_fit)
+summary(model2)
+plot(model2)
 
 
-crime_prediction_adj = (predict.lm(sc_reg_adj,scaled_point) * (max(mydata[, "Crime"]) - min(mydata[, "Crime"]))) +
-  min(mydata[, "Crime"])
+crime_prediction_adj = predict.lm(model2, point)
 
 crime_prediction_adj
 
+#Try cross-validation as well\:
+par(mfrow = c(1, 1))
+c1 = cv.lm(mydata, model1, m = 5)
+c2 = cv.lm(mydata, model2, m = 5)
+
+# Now compare the models using the R^2 values. From the summaries printed earlier
+# we know Model 1's R2 was 0.803 and Model 2's R2 was .766.
+
+SStot = sum((mydata$Crime - mean(mydata$Crime)) ^ 2)
+
+SSc1 = attr(c1, "ms") * nrow(mydata)
+SSc2 = attr(c2, "ms") * nrow(mydata)
+
+R2_cvm1 = 1 - SSc1 / SStot
+R2_cvm2 = 1 - SSc2 / SStot
+R2_cvm1
+R2_cvm2
+
+# So we see that the first model was overfit to the data. While the R2 of
+# model 1 was initially higher than model 2 using all of the data, by using
+# 5 fold cross validation we see that model 2 has a better fit, though it is
+# still probably over-fit as have a small set of data. As expected, the R2
+# of model 2 using cross validation is lower than that of the whole data set.
