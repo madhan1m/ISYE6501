@@ -59,9 +59,11 @@ point = data.frame(
 )
 
 
-f = formula(mydata)
-model1 = lm(f, mydata)
+f1 = formula(mydata)
+model1 = lm(f1, mydata)
 summary(model1)
+coef1 = model1$coefficients
+
 par(mfrow = c(2, 2))
 plot(model1)
 
@@ -86,8 +88,8 @@ for (i in 2:16) {
   }
 }
 
-f_adj = formula(mydata_fit)
-model2 = lm(f_adj, mydata_fit)
+f2 = formula(mydata_fit)
+model2 = lm(f2, mydata_fit)
 summary(model2)
 plot(model2)
 
@@ -96,7 +98,7 @@ crime_prediction_adj = predict.lm(model2, point)
 
 crime_prediction_adj
 
-#Try cross-validation as well\:
+#Try cross-validation as well:
 par(mfrow = c(1, 1))
 c1 = cv.lm(mydata, model1, m = 5)
 c2 = cv.lm(mydata, model2, m = 5)
@@ -117,5 +119,5 @@ R2_cvm2
 # So we see that the first model was overfit to the data. While the R2 of
 # model 1 was initially higher than model 2 using all of the data, by using
 # 5 fold cross validation we see that model 2 has a better fit, though it is
-# still probably over-fit as have a small set of data. As expected, the R2
+# still probably over-fit as we only have a small set of data. As expected, the R2
 # of model 2 using cross validation is lower than that of the whole data set.
