@@ -1,0 +1,234 @@
+> set.seed(1)
+> 
+> #install.packages("stats")
+> #install.packages("pls")
+> #install.packages("DAAG")
+> library(stats)
+> library(pls)
+> library(DAAG)
+> 
+> input = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+> mydata = input[c(16, 1:15)] #reorder so that crime is the first column (for formula)
+> predictors = mydata[-1]
+> crime = mydata[1]
+> PCA = prcomp(~ ., predictors, scale = TRUE)
+> summary(PCA)
+Importance of components:
+                         PC1   PC2   PC3    PC4    PC5    PC6    PC7    PC8    PC9   PC10   PC11    PC12    PC13   PC14    PC15
+Standard deviation     2.453 1.674 1.416 1.0781 0.9789 0.7438 0.5673 0.5544 0.4849 0.4471 0.4191 0.35804 0.26333 0.2418 0.06793
+Proportion of Variance 0.401 0.187 0.134 0.0775 0.0639 0.0369 0.0214 0.0205 0.0157 0.0133 0.0117 0.00855 0.00462 0.0039 0.00031
+Cumulative Proportion  0.401 0.588 0.722 0.7992 0.8631 0.9000 0.9214 0.9419 0.9576 0.9709 0.9826 0.99117 0.99579 0.9997 1.00000
+> attributes(PCA)
+$names
+[1] "sdev"     "rotation" "center"   "scale"    "x"        "call"    
+
+$class
+[1] "prcomp"
+
+> 
+> biplot(PCA, scale = 0)
+> 
+> # From the biplot we see that PC1 is a most likely a fuction of Wealth, Income Inequality,
+> # M, and So and that PC2 is most likely a function of U2, Time, Pop, M.F, and L.F.  These are
+> # easily becuase these are most parallel to the axes and thus have the largest variances in that direction.
+> 
+> screeplot(PCA, xlab = 'PCs')
+> var = PCA$sdev ^ 2 #variances
+> PropofVar = var / sum(var) #Proportion of Variances
+> plot(PropofVar) #Plots Proportion of Variances vs the PC number.
+> 
+> # From the screeplot and plotting Proportion of Variances vs the PC number, we can visually
+> # see a diminishing return. I will chose the first 7 PC's, which from the summary we see
+> # accounts for 92.1% of the values.  Other values can be chosen, but to me this is the point
+> # after which the curve flattens significantly
+> 
+> n = 7 #this is the number of PC's to use
+> 
+> PCs = PCA$x[, 1:n]
+> PCdata = cbind(crime, PCs)
+> 
+> model = lm(Crime ~ ., PCdata)
+> summary(model)
+
+Call:
+lm(formula = Crime ~ ., data = PCdata)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-475.4 -141.6   34.7  137.2  412.3 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    905.1       34.2   26.45  < 2e-16 ***
+PC1             65.2       14.1    4.63  4.0e-05 ***
+PC2            -70.1       20.7   -3.39   0.0016 ** 
+PC3             25.2       24.4    1.03   0.3086    
+PC4             69.4       32.1    2.16   0.0366 *  
+PC5           -229.0       35.3   -6.48  1.1e-07 ***
+PC6            -60.2       46.5   -1.29   0.2029    
+PC7            117.3       61.0    1.92   0.0617 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 235 on 39 degrees of freedom
+Multiple R-squared:  0.688,	Adjusted R-squared:  0.632 
+F-statistic: 12.3 on 7 and 39 DF,  p-value: 3.51e-08
+
+> 
+> point = data.frame(
++   M = 14.0,
++   So = 0,
++   Ed = 10.0,
++   Po1 = 12.0,
++   Po2 = 15.5,
++   LF = 0.640,
++   M.F = 94.0,
++   Pop = 150,
++   NW = 1.1,
++   U1 = 0.120,
++   U2 = 3.6,
++   Wealth = 3200,
++   Ineq = 20.1,
++   Prob = 0.04,
++   Time = 39.0
++ )
+> 
+> model$coefficients #These are the coefficients in the PCA (or beta coefficients)
+(Intercept)         PC1         PC2         PC3         PC4         PC5         PC6         PC7 
+      905.1        65.2       -70.1        25.2        69.4      -229.0       -60.2       117.3 
+> betas = model$coefficients[-1]
+> beta0 = model$coefficients[1]
+> 
+> 
+> #Now we need to rotate/convert the coefficients back into the original unscaled space
+> alphas = PCA$rotation[, 1:n] %*% betas
+> 
+> p_mean = sapply(predictors, mean)
+> p_sd = sapply(predictors, sd)
+> a_orig = alphas / p_sd
+> a_orig  #these are the un-scaled coefficents for each input
+            [,1]
+M       5.52e+01
+So      1.40e+02
+Ed     -6.80e+00
+Po1     4.46e+01
+Po2     4.64e+01
+LF      6.73e+02
+M.F     4.44e+01
+Pop     9.60e-01
+NW      5.68e+00
+U1     -1.03e+03
+U2      2.44e+01
+Wealth  2.88e-02
+Ineq    1.25e+01
+Prob   -5.17e+03
+Time   -2.22e+00
+> 
+> a0 = beta0 - sum(alphas * p_mean / p_sd)
+> a0 #this is the un-scaled intercept
+(Intercept) 
+      -5498 
+> 
+> prediction = a0 + sum(a_orig * point)  #creating the equation for the regression line and calculating the predition
+> prediction
+(Intercept) 
+       1230 
+> 
+> # The final model from question 8.2 of HW5, which used the formula Crime ~ M + Ed + Po1 + U2 + Ineq + Prob, had
+> # a predicted crime rate of 1304 and an adjusted R^2 value of 0.766, showing that perhaps there is just too much
+> # correlation in the data for the PCA model to overcome and that removing multiple predictors as in the last
+> # homework yields a better model.  However, if we use cross validation:
+> 
+> 
+> PClist = as.data.frame(PCA$x[, 1:n])
+> PCcv = cbind(crime, PClist)
+> model2 = lm(Crime ~ ., PCcv)
+> cv = cv.lm(PCcv, model2, m = 5)
+Analysis of Variance Table
+
+Response: Crime
+          Df  Sum Sq Mean Sq F value  Pr(>F)    
+PC1        1 1177568 1177568   21.40 4.0e-05 ***
+PC2        1  633037  633037   11.51  0.0016 ** 
+PC3        1   58541   58541    1.06  0.3086    
+PC4        1  257832  257832    4.69  0.0366 *  
+PC5        1 2312556 2312556   42.03 1.1e-07 ***
+PC6        1   92261   92261    1.68  0.2029    
+PC7        1  203535  203535    3.70  0.0617 .  
+Residuals 39 2145598   55015                    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+
+fold 1 
+Observations in test set: 9 
+              1    4    8   9  18   20   23    32   47
+Predicted   629 1732 1262 806 948 1150  852 798.7 1095
+cvpred      601 1608 1131 764 951 1116  742 770.9 1133
+Crime       791 1969 1555 856 929 1225 1216 754.0  849
+CV residual 190  361  424  92 -22  109  474 -16.9 -284
+
+Sum of squares = 672826    Mean square = 74758    n = 9 
+
+fold 2 
+Observations in test set: 10 
+               5    13     15  17    25    34    39     40    42   46
+Predicted   1036 547.6 775.01 395 472.5 888.3 753.4 1121.8 208.3  983
+cvpred      1028 535.8 805.54 250 449.4 843.5 788.1 1212.8  45.3 1031
+Crime       1234 511.0 798.00 539 523.0 923.0 826.0 1151.0 542.0  508
+CV residual  206 -24.8  -7.54 289  73.6  79.5  37.9  -61.8 496.7 -523
+
+Sum of squares = 663439    Mean square = 66344    n = 10 
+
+fold 3 
+Observations in test set: 10 
+               2     3   11    14     16   22   28   31   33   38
+Predicted   1254 475.2 1262 606.5  977.2  605 1073  798  821  641
+cvpred      1236 521.4 1143 579.1 1030.4  630 1072  913  791  683
+Crime       1635 578.0 1674 664.0  946.0  439 1216  373 1072  566
+CV residual  399  56.6  531  84.9  -84.4 -191  144 -540  281 -117
+
+Sum of squares = 9e+05    Mean square = 89983    n = 10 
+
+fold 4 
+Observations in test set: 9 
+              19    21   26   27   29   30     36     44    45
+Predicted   1074 757.1 1862  524 1449  814 1085.2 1113.7 481.8
+cvpred      1278 785.3 1748  647 1689  832 1183.9 1098.1 505.6
+Crime        750 742.0 1993  342 1043  696 1272.0 1030.0 455.0
+CV residual -528 -43.3  245 -305 -646 -136   88.1  -68.1 -50.6
+
+Sum of squares = 884371    Mean square = 98263    n = 9 
+
+fold 5 
+Observations in test set: 9 
+               6   7   10    12    24   35   37    41   43
+Predicted    970 910  887 762.0 933.0  830 1167 834.7 1117
+cvpred       957 908  935 806.6 909.9  787 1364 928.3 1247
+Crime        682 963  705 849.0 968.0  653  831 880.0  823
+CV residual -275  55 -230  42.4  58.1 -134 -533 -48.3 -424
+
+Sum of squares = 621165    Mean square = 69018    n = 9 
+
+Overall (Sum over all 9 folds) 
+   ms 
+79609 
+Warning message:
+In cv.lm(PCcv, model2, m = 5) : 
+
+ As there is >1 explanatory variable, cross-validation
+ predicted values for a fold are not a linear function
+ of corresponding overall predicted values.  Lines that
+ are shown for the different folds are approximate
+
+> mn = mean(crime[, 1])
+> R2 = 1 - attr(cv, "ms") * nrow(mydata) / sum((crime - mn) ^ 2)
+> R2
+[1] 0.456
+> 
+> # We calculate an R^2 of 0.456 for the PCA, again using the top 7 PC’s, vs 0.413, for the model using
+> # all 15 predictors.  However, this is when using all 15 variables.  When reducing the number of predictors
+> # to the above formula, we saw a R^2 of 0.638, which again shows that removing predictors in linear
+> # regression is superior, at least in this case.
+> 
