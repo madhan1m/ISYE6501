@@ -1,0 +1,70 @@
+> set.seed(1)
+> 
+> #install.packages("randomForest")
+> library(randomForest)
+> 
+> input = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+> mydata = input[c(16, 1:15)] #reorder so that crime is the first column (for formula)
+> f1 = formula(mydata)
+> predictors = mydata[-1]
+> crime = mydata[1]
+> 
+> 
+> fit = randomForest(f1, data = mydata, importance = TRUE)
+> print(fit)
+
+Call:
+ randomForest(formula = f1, data = mydata, importance = TRUE) 
+               Type of random forest: regression
+                     Number of trees: 500
+No. of variables tried at each split: 5
+
+          Mean of squared residuals: 84247
+                    % Var explained: 42.5
+> plot()
+Error in xy.coords(x, y, xlabel, ylabel, log) : 
+  argument "x" is missing, with no default
+> varImpPlot(fit, main = "Crime Rate Random Forest Variable Importance")
+> importance(fit)
+       %IncMSE IncNodePurity
+M        2.389        246255
+So       2.479         24439
+Ed       2.700        232619
+Po1     10.261       1127281
+Po2     11.674       1214362
+LF       3.292        265260
+M.F      0.441        273345
+Pop      1.450        385996
+NW       9.846        527077
+U1       0.270        124007
+U2       0.453        195127
+Wealth   4.219        579063
+Ineq     2.832        236596
+Prob     7.972        814756
+Time     2.493        228670
+> # Interesting that the Po1, Po2, NW, and Prob variables are considered important in this model,
+> # as they were not in the previous HW's.
+> 
+> pred = predict(fit)
+> sse = sum((pred - mydata$Crime) ^ 2)
+> sst = sum((mydata$Crime - mean(mydata$Crime)) ^ 2)
+> 1 - sse / sst
+[1] 0.425
+> 
+> # This seems much better than the models found in the regular regression tree. Random forests
+> # have the benefit of reducing overfitting.  Let's try splitting the data into training
+> # and testing groups
+> 
+> data_train = mydata[1:37, ]
+> data_test = mydata[38:nrow(mydata), ]
+> 
+> fit2 = randomForest(f1, data = data_train, importance = TRUE)
+> 
+> pred2 = predict(fit2, data_test)
+> psse = sum((pred2 - data_test$Crime) ^ 2)
+> psst = sum((data_test$Crime - mean(data_test$Crime)) ^ 2)
+> 1 - psse / psst
+[1] 0.204
+> 
+> # The R2 is much lower than the original, at 0.265.  This decrease is expected though, since
+> # we are not validating on the same data.

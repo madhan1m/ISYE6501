@@ -20,106 +20,70 @@ f1 = formula(mydata)
 predictors = mydata[-1]
 crime = mydata[1]
 
-point = data.frame(
-  M = 14.0,
-  So = 0,
-  Ed = 10.0,
-  Po1 = 12.0,
-  Po2 = 15.5,
-  LF = 0.640,
-  M.F = 94.0,
-  Pop = 150,
-  NW = 1.1,
-  U1 = 0.120,
-  U2 = 3.6,
-  Wealth = 3200,
-  Ineq = 20.1,
-  Prob = 0.04,
-  Time = 39.0
-)
+data_train = mydata[1:35,]
+data_test = mydata[36:nrow(mydata),]
 
-# split = nrow(mydata) / 2
-# data_half1 = mydata[1:23,]
-# data_half2 = mydata[24:nrow(mydata),]
-
-# tree = tree(Crime ~ .,data = mydata) 
-# summary(tree)
-# plot(tree); text(tree)
-# 
-# cv = cv.tree(tree, ,prune.tree, K = 4)
-# summary(cv)
-# plot(cv); text(cv)
-
-tree = rpart(Crime ~ .,data = mydata)
+tree = rpart(Crime ~ ., data = data_train)
 
 summary(tree) # detailed summary of splits
 print(tree)
 
-plot(tree, uniform=TRUE, main="Crime Rate Data Decision Tree")
-text(tree, use.n=TRUE, all=TRUE, cex=.8)
+plot(tree, uniform = TRUE, main = "Crime Rate Data Decision Tree")
+text(tree,
+     use.n = TRUE,
+     all = TRUE,
+     cex = .8)
 tree$where
 names = row.names(tree$frame)
 loc = names[tree$where]
-groups = cbind(loc, mydata)
+groups = cbind(loc, data_train)
 
-group4 = subset.data.frame(groups, loc == 4)
-model4 = lm(f1, group4)
-summary(model4)
-coef4 = model4$coefficients
+pred = predict(tree, data_test)
+sse = sum((pred - data_test$Crime) ^ 2)
+sst = sum((data_test$Crime - mean(data_test$Crime)) ^ 2) #total sum of squares
+1 - sse / sst
+# Sum of squares error is greater than the total sum of squares.  This is a bad model.
 
-group5 = subset.data.frame(groups, loc == 5)
-model5 = lm(f1, group5)
-summary(model5)
-coef5 = model5$coefficients
+# Try pruning to the lowest cross-validation error from the original tree.
 
-group6 = subset.data.frame(groups, loc == 6)
-model6 = lm(f1, group6)
-summary(model6)
-coef6 = model6$coefficients
+ptree = prune(tree, cp = 0.1481)
 
-group7 = subset.data.frame(groups, loc == 7)
-model7 = lm(f1, group7)
-summary(model7)
-coef7 = model7$coefficients
-
-#The prediction point ends up in node 6, so predicting:
-crime_prediction = predict.lm(model6, point)
-crime_prediction
-
-#not a very good model.  Try pruning to the lowest cross-validation error from the original tree.
-ptree = prune(tree, cp = 0.1481 )
-
-plot(ptree, uniform=TRUE, main="Crime Rate Data Decision Tree (Pruned)")
-text(ptree, use.n=TRUE, all=TRUE, cex=.8)
-summary(ptree) 
+plot(ptree, uniform = TRUE, main = "Crime Rate Data Decision Tree (Pruned)")
+text(ptree,
+     use.n = TRUE,
+     all = TRUE,
+     cex = .8)
+summary(ptree)
 print(ptree)
 
 
 pnames = row.names(ptree$frame)
 ploc = pnames[ptree$where]
-pgroups = cbind(ploc, mydata)
+pgroups = cbind(ploc, data_train)
+
+ppred = predict(ptree, data_test)
+psse = sum((ppred - data_test$Crime) ^ 2) #sum of squared errors
+psst = sum((data_test$Crime - mean(data_test$Crime)) ^ 2) #total sum of squares
+1 - psse / psst
+
 
 pgroup2 = subset.data.frame(pgroups, ploc == 2)
 pmodel2 = lm(f1, pgroup2)
 summary(pmodel2)
-pcoef2 = pmodel2$coefficients
-
-pgroup6 = subset.data.frame(pgroups, ploc == 6)
-pmodel6 = lm(f1, pgroup6)
-summary(pmodel6)
-pcoef6 = pmodel6$coefficients
-
-pgroup7 = subset.data.frame(pgroups, ploc == 7)
-pmodel7 = lm(f1, pgroup7)
-summary(pmodel7)
-pcoef7 = pmodel7$coefficients
+#From the summary, reduce the number of factors by pvalue:
+pmodel2_a = lm(Crime ~ Wealth + Time + M + So + M.F + Prob, pgroup2)
+summary(pmodel2_a) # the model is now worse. I think it is just due to extreme overfitting
 
 
+pgroup3 = subset.data.frame(pgroups, ploc == 3)
+pmodel3 = lm(f1, pgroup3)
+summary(pmodel3) #This model is so overfit that 5 coeficients are not defined. Reducing the factors gives:
 
-#The prediction point again ends up in node 6, so predicting:
-pcrime_prediction = predict.lm(pmodel6, point)
-pcrime_prediction
+pmodel3_a = lm(Crime ~ M + So + Ed + Po1 + Po2 + LF + M.F + Pop + NW, pgroup2)
+summary(pmodel3_a)
 
-# Still not a very good prediction.  I would think we are experiencing a large amount 
-# of over-fitting since the node, pgroup6, only contains 10 points of the original data, which is very
-# small but still above the 5% minimum (thought 5% of 47 is only 2-3 points of data).
+
+# I would think we are experiencing a large amount
+# of over-fitting since the node, pgroup3, only contains 11 points of the original data, which is very
+# small but still above the 5% minimum (thought 5% of 47 is only 2-3 points of data). The psuedo-R2 calculated
+# from the test data still shows that this model is just not good at all.

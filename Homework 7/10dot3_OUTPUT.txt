@@ -1,0 +1,472 @@
+> set.seed(1)
+> 
+> # install.packages("stats")
+> # install.packages("boot")
+> # install.packages("caret")
+> # install.packages("pROC")
+> library(stats)
+> library(boot)
+> library(caret)
+> library(pROC)
+> 
+> input = data.frame(read.table("germancredit.txt", header = F)) #read in data
+> # http://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29
+> 
+> loan = input[21] - 1 #scale the result vector to between 0 and 1
+> mydata = cbind(loan, input[1:20]) #reorder so that the result is the first column (for formula)
+> r = nrow(mydata)
+> set = sample(1:r, size = round(r * .8), replace = FALSE)
+> train = mydata[set,]
+> test = mydata[-set,]
+> 
+> #build the model, with categorical factors being treated with the factor() function.
+> f1 = V21 ~ factor(V1) + V2 + factor(V3) + factor(V4) + V5 + factor(V6) + factor(V7) + V8 + factor(V9) + factor(V10) + V11 + factor(V12) + V13 + factor(V14) + factor(V15) + V16 + factor(V17) + V18 + factor(V19) + factor(V20)
+> predictors = train[-1]
+> loan = train[1] - 1
+> 
+> model = glm(f1, family = binomial(link = "logit"), data = train)
+> summary(model)
+
+Call:
+glm(formula = f1, family = binomial(link = "logit"), data = train)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+-2.160  -0.682  -0.359   0.643   2.724  
+
+Coefficients:
+                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)      1.01e+00   1.28e+00    0.79  0.42755    
+factor(V1)A12   -2.97e-01   2.52e-01   -1.18  0.23826    
+factor(V1)A13   -9.40e-01   4.37e-01   -2.15  0.03133 *  
+factor(V1)A14   -1.56e+00   2.66e-01   -5.87  4.5e-09 ***
+V2               3.22e-02   1.08e-02    2.98  0.00284 ** 
+factor(V3)A31   -4.46e-01   6.37e-01   -0.70  0.48399    
+factor(V3)A32   -8.88e-01   5.02e-01   -1.77  0.07696 .  
+factor(V3)A33   -1.35e+00   5.33e-01   -2.53  0.01129 *  
+factor(V3)A34   -1.91e+00   5.19e-01   -3.68  0.00023 ***
+factor(V4)A41   -1.96e+00   4.56e-01   -4.29  1.8e-05 ***
+factor(V4)A410  -1.82e+00   8.54e-01   -2.12  0.03360 *  
+factor(V4)A42   -8.57e-01   2.98e-01   -2.88  0.00401 ** 
+factor(V4)A43   -9.14e-01   2.82e-01   -3.24  0.00118 ** 
+factor(V4)A44   -3.33e-01   7.97e-01   -0.42  0.67656    
+factor(V4)A45   -5.73e-01   7.36e-01   -0.78  0.43649    
+factor(V4)A46    3.96e-01   4.55e-01    0.87  0.38398    
+factor(V4)A48   -1.99e+00   1.21e+00   -1.64  0.10081    
+factor(V4)A49   -7.45e-01   3.80e-01   -1.96  0.04988 *  
+V5               1.02e-04   5.17e-05    1.97  0.04930 *  
+factor(V6)A62   -3.33e-01   3.22e-01   -1.03  0.30098    
+factor(V6)A63   -8.45e-01   5.01e-01   -1.69  0.09153 .  
+factor(V6)A64   -1.07e+00   5.62e-01   -1.90  0.05740 .  
+factor(V6)A65   -1.12e+00   3.04e-01   -3.68  0.00023 ***
+factor(V7)A72    1.06e-01   4.76e-01    0.22  0.82318    
+factor(V7)A73   -2.27e-01   4.53e-01   -0.50  0.61674    
+factor(V7)A74   -7.39e-01   5.01e-01   -1.47  0.14023    
+factor(V7)A75   -1.77e-01   4.63e-01   -0.38  0.70264    
+V8               2.93e-01   1.02e-01    2.87  0.00407 ** 
+factor(V9)A92   -5.21e-01   4.38e-01   -1.19  0.23402    
+factor(V9)A93   -1.03e+00   4.32e-01   -2.39  0.01678 *  
+factor(V9)A94   -6.76e-01   5.21e-01   -1.30  0.19441    
+factor(V10)A102  2.35e-01   4.39e-01    0.53  0.59321    
+factor(V10)A103 -1.29e+00   5.05e-01   -2.54  0.01095 *  
+V11              4.09e-02   9.96e-02    0.41  0.68166    
+factor(V12)A122  1.92e-01   2.92e-01    0.66  0.51052    
+factor(V12)A123  2.34e-01   2.67e-01    0.87  0.38207    
+factor(V12)A124  1.00e+00   4.87e-01    2.06  0.03963 *  
+V13             -1.99e-02   1.08e-02   -1.85  0.06421 .  
+factor(V14)A142 -2.23e-01   4.79e-01   -0.47  0.64128    
+factor(V14)A143 -8.50e-01   2.73e-01   -3.12  0.00183 ** 
+factor(V15)A152 -5.83e-01   2.71e-01   -2.15  0.03136 *  
+factor(V15)A153 -1.16e+00   5.58e-01   -2.07  0.03843 *  
+V16              4.55e-01   2.24e-01    2.03  0.04221 *  
+factor(V17)A172  7.33e-01   7.91e-01    0.93  0.35424    
+factor(V17)A173  7.16e-01   7.64e-01    0.94  0.34878    
+factor(V17)A174  5.30e-01   7.69e-01    0.69  0.49081    
+V18              2.15e-01   2.94e-01    0.73  0.46405    
+factor(V19)A192 -1.39e-01   2.31e-01   -0.60  0.54698    
+factor(V20)A202 -1.72e+00   8.57e-01   -2.00  0.04538 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 980.75  on 799  degrees of freedom
+Residual deviance: 694.69  on 751  degrees of freedom
+AIC: 792.7
+
+Number of Fisher Scoring iterations: 5
+
+> 
+> # Find and eliminate those predictors with a p-testue < 0.05
+> data.frame(summary(model)$coef[summary(model)$coef[, 4] <= .05, 4])
+                summary.model..coef.summary.model..coef...4.....0.05..4.
+factor(V1)A13                                                   3.13e-02
+factor(V1)A14                                                   4.46e-09
+V2                                                              2.84e-03
+factor(V3)A33                                                   1.13e-02
+factor(V3)A34                                                   2.30e-04
+factor(V4)A41                                                   1.79e-05
+factor(V4)A410                                                  3.36e-02
+factor(V4)A42                                                   4.01e-03
+factor(V4)A43                                                   1.18e-03
+factor(V4)A49                                                   4.99e-02
+V5                                                              4.93e-02
+factor(V6)A65                                                   2.34e-04
+V8                                                              4.07e-03
+factor(V9)A93                                                   1.68e-02
+factor(V10)A103                                                 1.10e-02
+factor(V12)A124                                                 3.96e-02
+factor(V14)A143                                                 1.83e-03
+factor(V15)A152                                                 3.14e-02
+factor(V15)A153                                                 3.84e-02
+V16                                                             4.22e-02
+factor(V20)A202                                                 4.54e-02
+> f2 = V21 ~ factor(V1) + V2 + factor(V3) + factor(V4) + V5 + factor(V6) + V8 + factor(V9) + factor(V10) + factor(V12) + factor(V14) + factor(V15) + factor(V16) +  factor(V20)
+> model2 = glm(f2, family = binomial(link = "logit"), data = train)
+> summary(model2)
+
+Call:
+glm(formula = f2, family = binomial(link = "logit"), data = train)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+-2.183  -0.673  -0.365   0.675   2.905  
+
+Coefficients:
+                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)      1.66e+00   8.24e-01    2.02  0.04363 *  
+factor(V1)A12   -2.76e-01   2.46e-01   -1.12  0.26228    
+factor(V1)A13   -9.56e-01   4.25e-01   -2.25  0.02461 *  
+factor(V1)A14   -1.58e+00   2.64e-01   -6.00  2.0e-09 ***
+V2               3.34e-02   1.06e-02    3.16  0.00157 ** 
+factor(V3)A31   -4.51e-01   6.33e-01   -0.71  0.47638    
+factor(V3)A32   -8.34e-01   5.06e-01   -1.65  0.09935 .  
+factor(V3)A33   -1.37e+00   5.31e-01   -2.58  0.00977 ** 
+factor(V3)A34   -1.97e+00   5.11e-01   -3.85  0.00012 ***
+factor(V4)A41   -1.94e+00   4.46e-01   -4.34  1.4e-05 ***
+factor(V4)A410  -1.85e+00   8.27e-01   -2.24  0.02507 *  
+factor(V4)A42   -6.95e-01   2.88e-01   -2.42  0.01571 *  
+factor(V4)A43   -8.51e-01   2.77e-01   -3.08  0.00209 ** 
+factor(V4)A44   -2.92e-01   7.88e-01   -0.37  0.71085    
+factor(V4)A45   -7.24e-01   7.30e-01   -0.99  0.32171    
+factor(V4)A46    3.96e-01   4.51e-01    0.88  0.37985    
+factor(V4)A48   -2.04e+00   1.23e+00   -1.67  0.09575 .  
+factor(V4)A49   -7.48e-01   3.73e-01   -2.01  0.04476 *  
+V5               8.11e-05   4.90e-05    1.65  0.09810 .  
+factor(V6)A62   -2.95e-01   3.16e-01   -0.94  0.34940    
+factor(V6)A63   -9.09e-01   4.84e-01   -1.88  0.06009 .  
+factor(V6)A64   -1.07e+00   5.48e-01   -1.96  0.05056 .  
+factor(V6)A65   -1.20e+00   3.00e-01   -4.02  5.9e-05 ***
+V8               2.68e-01   9.94e-02    2.70  0.00701 ** 
+factor(V9)A92   -4.10e-01   4.25e-01   -0.96  0.33473    
+factor(V9)A93   -9.98e-01   4.19e-01   -2.38  0.01718 *  
+factor(V9)A94   -5.37e-01   5.06e-01   -1.06  0.28846    
+factor(V10)A102  1.42e-01   4.35e-01    0.33  0.74370    
+factor(V10)A103 -1.37e+00   5.06e-01   -2.71  0.00669 ** 
+factor(V12)A122  1.67e-01   2.86e-01    0.58  0.55887    
+factor(V12)A123  1.83e-01   2.61e-01    0.70  0.48207    
+factor(V12)A124  9.03e-01   4.73e-01    1.91  0.05634 .  
+factor(V14)A142 -1.48e-01   4.64e-01   -0.32  0.74902    
+factor(V14)A143 -8.60e-01   2.68e-01   -3.21  0.00134 ** 
+factor(V15)A152 -6.95e-01   2.55e-01   -2.73  0.00630 ** 
+factor(V15)A153 -1.27e+00   5.38e-01   -2.35  0.01868 *  
+factor(V16)2     5.99e-01   2.77e-01    2.16  0.03081 *  
+factor(V16)3     6.55e-01   6.75e-01    0.97  0.33209    
+factor(V16)4     3.72e-01   1.13e+00    0.33  0.74125    
+factor(V20)A202 -1.61e+00   8.56e-01   -1.88  0.05962 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 980.75  on 799  degrees of freedom
+Residual deviance: 706.06  on 760  degrees of freedom
+AIC: 786.1
+
+Number of Fisher Scoring iterations: 5
+
+> 
+> #Again, find and eliminate those predictors with a p-testue < 0.05
+> data.frame(summary(model2)$coef[summary(model2)$coef[, 4] <= .05, 4])
+                summary.model2..coef.summary.model2..coef...4.....0.05..4.
+(Intercept)                                                       4.36e-02
+factor(V1)A13                                                     2.46e-02
+factor(V1)A14                                                     2.03e-09
+V2                                                                1.57e-03
+factor(V3)A33                                                     9.77e-03
+factor(V3)A34                                                     1.18e-04
+factor(V4)A41                                                     1.41e-05
+factor(V4)A410                                                    2.51e-02
+factor(V4)A42                                                     1.57e-02
+factor(V4)A43                                                     2.09e-03
+factor(V4)A49                                                     4.48e-02
+factor(V6)A65                                                     5.89e-05
+V8                                                                7.01e-03
+factor(V9)A93                                                     1.72e-02
+factor(V10)A103                                                   6.69e-03
+factor(V14)A143                                                   1.34e-03
+factor(V15)A152                                                   6.30e-03
+factor(V15)A153                                                   1.87e-02
+factor(V16)2                                                      3.08e-02
+> f3 = V21 ~ factor(V1) + V2 + factor(V3) + factor(V4) + V8 + factor(V9) + factor(V10) + factor(V14) + factor(V15) +  factor(V20)
+> model3 = glm(f3, family = binomial(link = "logit"), data = train)
+> summary(model3)
+
+Call:
+glm(formula = f3, family = binomial(link = "logit"), data = train)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+-2.208  -0.702  -0.408   0.729   2.529  
+
+Coefficients:
+                Estimate Std. Error z value Pr(>|z|)    
+(Intercept)      2.55664    0.74084    3.45  0.00056 ***
+factor(V1)A12   -0.43778    0.22844   -1.92  0.05532 .  
+factor(V1)A13   -1.11371    0.41249   -2.70  0.00693 ** 
+factor(V1)A14   -1.77074    0.25002   -7.08  1.4e-12 ***
+V2               0.04014    0.00791    5.08  3.8e-07 ***
+factor(V3)A31   -1.07358    0.58933   -1.82  0.06850 .  
+factor(V3)A32   -1.41766    0.46564   -3.04  0.00233 ** 
+factor(V3)A33   -1.54161    0.51768   -2.98  0.00290 ** 
+factor(V3)A34   -2.04265    0.49449   -4.13  3.6e-05 ***
+factor(V4)A41   -1.68293    0.41536   -4.05  5.1e-05 ***
+factor(V4)A410  -1.53250    0.75562   -2.03  0.04255 *  
+factor(V4)A42   -0.65933    0.27395   -2.41  0.01610 *  
+factor(V4)A43   -0.83773    0.26636   -3.15  0.00166 ** 
+factor(V4)A44   -0.49368    0.78227   -0.63  0.52799    
+factor(V4)A45   -0.53701    0.70765   -0.76  0.44793    
+factor(V4)A46    0.39536    0.42890    0.92  0.35663    
+factor(V4)A48   -2.00516    1.18552   -1.69  0.09076 .  
+factor(V4)A49   -0.69822    0.35803   -1.95  0.05115 .  
+V8               0.18629    0.08699    2.14  0.03224 *  
+factor(V9)A92   -0.41521    0.40293   -1.03  0.30279    
+factor(V9)A93   -0.91804    0.39604   -2.32  0.02045 *  
+factor(V9)A94   -0.56541    0.48356   -1.17  0.24229    
+factor(V10)A102  0.44652    0.41809    1.07  0.28552    
+factor(V10)A103 -1.17530    0.48340   -2.43  0.01505 *  
+factor(V14)A142 -0.18639    0.44552   -0.42  0.67567    
+factor(V14)A143 -0.87374    0.25809   -3.39  0.00071 ***
+factor(V15)A152 -0.70340    0.24453   -2.88  0.00402 ** 
+factor(V15)A153 -0.61857    0.36673   -1.69  0.09166 .  
+factor(V20)A202 -1.80201    0.81132   -2.22  0.02635 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 980.75  on 799  degrees of freedom
+Residual deviance: 740.64  on 771  degrees of freedom
+AIC: 798.6
+
+Number of Fisher Scoring iterations: 5
+
+> model3$coefficients
+    (Intercept)   factor(V1)A12   factor(V1)A13   factor(V1)A14              V2   factor(V3)A31   factor(V3)A32   factor(V3)A33 
+         2.5566         -0.4378         -1.1137         -1.7707          0.0401         -1.0736         -1.4177         -1.5416 
+  factor(V3)A34   factor(V4)A41  factor(V4)A410   factor(V4)A42   factor(V4)A43   factor(V4)A44   factor(V4)A45   factor(V4)A46 
+        -2.0427         -1.6829         -1.5325         -0.6593         -0.8377         -0.4937         -0.5370          0.3954 
+  factor(V4)A48   factor(V4)A49              V8   factor(V9)A92   factor(V9)A93   factor(V9)A94 factor(V10)A102 factor(V10)A103 
+        -2.0052         -0.6982          0.1863         -0.4152         -0.9180         -0.5654          0.4465         -1.1753 
+factor(V14)A142 factor(V14)A143 factor(V15)A152 factor(V15)A153 factor(V20)A202 
+        -0.1864         -0.8737         -0.7034         -0.6186         -1.8020 
+> 
+> 
+> 
+> #Apply cross testidation to double check which model is better:
+> cv = cv.glm(train, model, K = 10)
+> cv2 = cv.glm(train, model2, K = 10)
+> cv3 = cv.glm(train, model3, K = 10)
+> 
+> cv$delta[1]
+[1] 0.169
+> cv2$delta[1]
+[1] 0.168
+> cv3$delta[1]
+[1] 0.168
+> 
+> 
+> 
+> # Now we check what the response threshold should be using the test data:
+> 
+> pred = predict.glm(model3, newdata = test, type = 'response')
+> actual = test$V21
+> totalcost = matrix(, 100, ncol = 2)
+> n = 1
+> for (thresh in seq(.01, .99, .01)) {
++   answerx = matrix(, nrow(test), ncol = 1)
++   for (x in 1:length(pred)) {
++     if (pred[x] >= thresh) {
++       answerx[x] = 1
++     } else
++       answerx[x] = 0
++   }
++   cm = confusionMatrix(data = answerx,
++                        reference = actual,
++                        positive = '0')
++   # Now minimize the total cost, which would be cost = FP*5 + FN*1
++   cost = cm$table[2, 1] * 5 + cm$table[1, 2] * 1
++   totalcost[n, 1] = thresh
++   totalcost[n, 2] = cost
++   n = n + 1
++ }
+There were 13 warnings (use warnings() to see them)
+> totalcost
+       [,1] [,2]
+  [1,] 0.01  700
+  [2,] 0.02  680
+  [3,] 0.03  665
+  [4,] 0.04  656
+  [5,] 0.05  621
+  [6,] 0.06  586
+  [7,] 0.07  567
+  [8,] 0.08  537
+  [9,] 0.09  527
+ [10,] 0.10  482
+ [11,] 0.11  473
+ [12,] 0.12  459
+ [13,] 0.13  436
+ [14,] 0.14  416
+ [15,] 0.15  403
+ [16,] 0.16  379
+ [17,] 0.17  364
+ [18,] 0.18  345
+ [19,] 0.19  337
+ [20,] 0.20  329
+ [21,] 0.21  321
+ [22,] 0.22  311
+ [23,] 0.23  297
+ [24,] 0.24  298
+ [25,] 0.25  296
+ [26,] 0.26  281
+ [27,] 0.27  266
+ [28,] 0.28  251
+ [29,] 0.29  247
+ [30,] 0.30  242
+ [31,] 0.31  233
+ [32,] 0.32  228
+ [33,] 0.33  223
+ [34,] 0.34  224
+ [35,] 0.35  222
+ [36,] 0.36  217
+ [37,] 0.37  209
+ [38,] 0.38  199
+ [39,] 0.39  194
+ [40,] 0.40  184
+ [41,] 0.41  180
+ [42,] 0.42  161
+ [43,] 0.43  156
+ [44,] 0.44  156
+ [45,] 0.45  151
+ [46,] 0.46  146
+ [47,] 0.47  137
+ [48,] 0.48  128
+ [49,] 0.49  114
+ [50,] 0.50  104
+ [51,] 0.51  100
+ [52,] 0.52   96
+ [53,] 0.53   91
+ [54,] 0.54   91
+ [55,] 0.55   93
+ [56,] 0.56   85
+ [57,] 0.57   85
+ [58,] 0.58   81
+ [59,] 0.59   81
+ [60,] 0.60   82
+ [61,] 0.61   75
+ [62,] 0.62   71
+ [63,] 0.63   66
+ [64,] 0.64   66
+ [65,] 0.65   66
+ [66,] 0.66   66
+ [67,] 0.67   68
+ [68,] 0.68   70
+ [69,] 0.69   70
+ [70,] 0.70   70
+ [71,] 0.71   71
+ [72,] 0.72   73
+ [73,] 0.73   74
+ [74,] 0.74   74
+ [75,] 0.75   74
+ [76,] 0.76   69
+ [77,] 0.77   69
+ [78,] 0.78   64
+ [79,] 0.79   64
+ [80,] 0.80   64
+ [81,] 0.81   59
+ [82,] 0.82   59
+ [83,] 0.83   61
+ [84,] 0.84   61
+ [85,] 0.85   61
+ [86,] 0.86   57
+ [87,] 0.87   58
+ [88,] 0.88   58
+ [89,] 0.89   58
+ [90,] 0.90   58
+ [91,] 0.91   58
+ [92,] 0.92   58
+ [93,] 0.93   58
+ [94,] 0.94   58
+ [95,] 0.95   58
+ [96,] 0.96   58
+ [97,] 0.97   58
+ [98,] 0.98   58
+ [99,] 0.99   58
+[100,]   NA   NA
+> totalcost[which.min(totalcost[, 2]), 1]
+[1] 0.86
+> 
+> # From this, the minimum cost is found to be 57 at a minimum threshold of 0.86.
+> thresh = .86
+> answerx = matrix(, nrow(test), ncol = 1)
+> for (x in 1:length(pred)) {
++   if (pred[x] >= thresh) {
++     answerx[x] = 1
++   } else
++     answerx[x] = 0
++ }
+> 
+> cm = confusionMatrix(data = answerx,
++                      reference = actual,
++                      positive = '0')
+> cm
+Confusion Matrix and Statistics
+
+          Reference
+Prediction   0   1
+         0 142  57
+         1   0   1
+                                        
+               Accuracy : 0.715         
+                 95% CI : (0.647, 0.776)
+    No Information Rate : 0.71          
+    P-Value [Acc > NIR] : 0.473         
+                                        
+                  Kappa : 0.024         
+ Mcnemar's Test P-Value : 1.19e-13      
+                                        
+            Sensitivity : 1.0000        
+            Specificity : 0.0172        
+         Pos Pred Value : 0.7136        
+         Neg Pred Value : 1.0000        
+             Prevalence : 0.7100        
+         Detection Rate : 0.7100        
+   Detection Prevalence : 0.9950        
+      Balanced Accuracy : 0.5086        
+                                        
+       'Positive' Class : 0             
+                                        
+> 
+> #from the confusion matrix we see 142 TN, 57 FN, 0 FP, and 1 TP
+> roc = roc(test$V21, answerx)
+Warning message:
+In roc.default(test$V21, answerx) :
+  Deprecated use a matrix as predictor. Unexpected results may be produced, please pass a numeric vector.
+> roc
+
+Call:
+roc.default(response = test$V21, predictor = answerx)
+
+Data: answerx in 142 controls (test$V21 0) < 58 cases (test$V21 1).
+Area under the curve: 0.509
+> plot(roc)

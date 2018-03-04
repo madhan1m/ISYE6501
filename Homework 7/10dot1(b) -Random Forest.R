@@ -16,30 +16,33 @@ f1 = formula(mydata)
 predictors = mydata[-1]
 crime = mydata[1]
 
-point = data.frame(
-  M = 14.0,
-  So = 0,
-  Ed = 10.0,
-  Po1 = 12.0,
-  Po2 = 15.5,
-  LF = 0.640,
-  M.F = 94.0,
-  Pop = 150,
-  NW = 1.1,
-  U1 = 0.120,
-  U2 = 3.6,
-  Wealth = 3200,
-  Ineq = 20.1,
-  Prob = 0.04,
-  Time = 39.0
-)
 
 fit = randomForest(f1, data = mydata, importance = TRUE)
 print(fit)
+plot()
 varImpPlot(fit, main = "Crime Rate Random Forest Variable Importance")
 importance(fit)
 # Interesting that the Po1, Po2, NW, and Prob variables are considered important in this model,
-# as they were not in the previous HW's. 
+# as they were not in the previous HW's.
 
-predict(fit, point)
+pred = predict(fit)
+sse = sum((pred - mydata$Crime) ^ 2)
+sst = sum((mydata$Crime - mean(mydata$Crime)) ^ 2)
+1 - sse / sst
 
+# This seems much better than the models found in the regular regression tree. Random forests
+# have the benefit of reducing overfitting.  Let's try splitting the data into training
+# and testing groups
+
+data_train = mydata[1:37, ]
+data_test = mydata[38:nrow(mydata), ]
+
+fit2 = randomForest(f1, data = data_train, importance = TRUE)
+
+pred2 = predict(fit2, data_test)
+psse = sum((pred2 - data_test$Crime) ^ 2)
+psst = sum((data_test$Crime - mean(data_test$Crime)) ^ 2)
+1 - psse / psst
+
+# The R2 is much lower than the original, at 0.265.  This decrease is expected though, since
+# we are not validating on the same data.
