@@ -1,0 +1,510 @@
+> set.seed(1)
+> 
+> library(stats)
+> 
+> mydata = data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+> 
+> null = lm(Crime ~ 1, data = mydata)
+> full = lm(Crime ~ ., data = mydata)
+> #just using the stepwise selection, let's see what model we get
+> stepped = step(null,
++                scope = list(lower = null, upper = full),
++                direction = "both")
+Start:  AIC=561.02
+Crime ~ 1
+
+         Df Sum of Sq     RSS    AIC
++ Po1     1   3253302 3627626 532.94
++ Po2     1   3058626 3822302 535.39
++ Wealth  1   1340152 5540775 552.84
++ Prob    1   1257075 5623853 553.54
++ Pop     1    783660 6097267 557.34
++ Ed      1    717146 6163781 557.85
++ M.F     1    314867 6566061 560.82
+<none>                6880928 561.02
++ LF      1    245446 6635482 561.32
++ Ineq    1    220530 6660397 561.49
++ U2      1    216354 6664573 561.52
++ Time    1    154545 6726383 561.96
++ So      1     56527 6824400 562.64
++ M       1     55084 6825844 562.65
++ U1      1     17533 6863395 562.90
++ NW      1      7312 6873615 562.97
+
+Step:  AIC=532.94
+Crime ~ Po1
+
+         Df Sum of Sq     RSS    AIC
++ Ineq    1    739819 2887807 524.22
++ M       1    616741 3010885 526.18
++ M.F     1    250522 3377104 531.57
++ NW      1    232434 3395192 531.82
++ So      1    219098 3408528 532.01
++ Wealth  1    180872 3446754 532.53
+<none>                3627626 532.94
++ Po2     1    146167 3481459 533.00
++ Prob    1     92278 3535348 533.72
++ LF      1     77479 3550147 533.92
++ Time    1     43185 3584441 534.37
++ U2      1     17848 3609778 534.70
++ Pop     1      5666 3621959 534.86
++ U1      1      2878 3624748 534.90
++ Ed      1       767 3626859 534.93
+- Po1     1   3253302 6880928 561.02
+
+Step:  AIC=524.22
+Crime ~ Po1 + Ineq
+
+         Df Sum of Sq     RSS    AIC
++ Ed      1    587050 2300757 515.53
++ M.F     1    454545 2433262 518.17
++ Prob    1    280690 2607117 521.41
++ LF      1    260571 2627236 521.77
++ Wealth  1    213937 2673871 522.60
++ M       1    181236 2706571 523.17
++ Pop     1    130377 2757430 524.04
+<none>                2887807 524.22
++ NW      1     36439 2851369 525.62
++ So      1     33738 2854069 525.66
++ Po2     1     30673 2857134 525.71
++ U1      1      2309 2885498 526.18
++ Time    1       497 2887310 526.21
++ U2      1       253 2887554 526.21
+- Ineq    1    739819 3627626 532.94
+- Po1     1   3772590 6660397 561.49
+
+Step:  AIC=515.53
+Crime ~ Po1 + Ineq + Ed
+
+         Df Sum of Sq     RSS    AIC
++ M       1    239405 2061353 512.37
++ Prob    1    234981 2065776 512.47
++ M.F     1    117026 2183731 515.08
+<none>                2300757 515.53
++ Wealth  1     79540 2221218 515.88
++ U2      1     62112 2238646 516.25
++ Time    1     61770 2238987 516.26
++ Po2     1     42584 2258174 516.66
++ Pop     1     39319 2261438 516.72
++ U1      1      7365 2293392 517.38
++ LF      1      7254 2293503 517.39
++ NW      1      4210 2296547 517.45
++ So      1      4135 2296622 517.45
+- Ed      1    587050 2887807 524.22
+- Ineq    1   1326101 3626859 534.93
+- Po1     1   3782666 6083423 559.23
+
+Step:  AIC=512.37
+Crime ~ Po1 + Ineq + Ed + M
+
+         Df Sum of Sq     RSS    AIC
++ Prob    1    258063 1803290 508.08
++ U2      1    200988 1860365 509.55
++ Wealth  1    163378 1897975 510.49
+<none>                2061353 512.37
++ M.F     1     74398 1986955 512.64
++ U1      1     50835 2010518 513.20
++ Po2     1     45392 2015961 513.32
++ Time    1     42746 2018607 513.39
++ NW      1     16488 2044865 513.99
++ Pop     1      8101 2053251 514.19
++ So      1      3189 2058164 514.30
++ LF      1      2988 2058365 514.30
+- M       1    239405 2300757 515.53
+- Ed      1    645219 2706571 523.17
+- Ineq    1    864671 2926024 526.83
+- Po1     1   4000849 6062202 561.07
+
+Step:  AIC=508.08
+Crime ~ Po1 + Ineq + Ed + M + Prob
+
+         Df Sum of Sq     RSS    AIC
++ U2      1    192233 1611057 504.79
++ Wealth  1     86490 1716801 507.77
++ M.F     1     84509 1718781 507.83
+<none>                1803290 508.08
++ U1      1     52313 1750977 508.70
++ Pop     1     47719 1755571 508.82
++ Po2     1     37967 1765323 509.08
++ So      1     21971 1781320 509.51
++ Time    1     10194 1793096 509.82
++ LF      1       990 1802301 510.06
++ NW      1       797 1802493 510.06
+- Prob    1    258063 2061353 512.37
+- M       1    262486 2065776 512.47
+- Ed      1    598315 2401605 519.55
+- Ineq    1    968199 2771489 526.28
+- Po1     1   3268577 5071868 554.69
+
+Step:  AIC=504.79
+Crime ~ Po1 + Ineq + Ed + M + Prob + U2
+
+         Df Sum of Sq     RSS    AIC
+<none>                1611057 504.79
++ Wealth  1     59910 1551147 505.00
++ U1      1     54830 1556227 505.16
++ Pop     1     51320 1559737 505.26
++ M.F     1     30945 1580112 505.87
++ Po2     1     25017 1586040 506.05
++ So      1     17958 1593098 506.26
++ LF      1     13179 1597878 506.40
++ Time    1      7159 1603898 506.58
++ NW      1       359 1610698 506.78
+- U2      1    192233 1803290 508.08
+- Prob    1    249308 1860365 509.55
+- M       1    400611 2011667 513.22
+- Ed      1    776207 2387264 521.27
+- Ineq    1    949221 2560278 524.56
+- Po1     1   2817067 4428124 550.31
+> summary(stepped)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed + M + Prob + U2, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-470.68  -78.41  -19.68  133.12  556.23 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5040.50     899.84  -5.602 1.72e-06 ***
+Po1           115.02      13.75   8.363 2.56e-10 ***
+Ineq           67.65      13.94   4.855 1.88e-05 ***
+Ed            196.47      44.75   4.390 8.07e-05 ***
+M             105.02      33.30   3.154  0.00305 ** 
+Prob        -3801.84    1528.10  -2.488  0.01711 *  
+U2             89.37      40.91   2.185  0.03483 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 200.7 on 40 degrees of freedom
+Multiple R-squared:  0.7659,	Adjusted R-squared:  0.7307 
+F-statistic: 21.81 on 6 and 40 DF,  p-value: 3.418e-11
+
+> 
+> # Now we can do it manually, checking the p-values after each step and remove an factors
+> # that have a p-value >0.05.
+> sw = step(
++   null,
++   scope = list(lower = null, upper = full),
++   direction = "forward",
++   steps = 2
++ )
+Start:  AIC=561.02
+Crime ~ 1
+
+         Df Sum of Sq     RSS    AIC
++ Po1     1   3253302 3627626 532.94
++ Po2     1   3058626 3822302 535.39
++ Wealth  1   1340152 5540775 552.84
++ Prob    1   1257075 5623853 553.54
++ Pop     1    783660 6097267 557.34
++ Ed      1    717146 6163781 557.85
++ M.F     1    314867 6566061 560.82
+<none>                6880928 561.02
++ LF      1    245446 6635482 561.32
++ Ineq    1    220530 6660397 561.49
++ U2      1    216354 6664573 561.52
++ Time    1    154545 6726383 561.96
++ So      1     56527 6824400 562.64
++ M       1     55084 6825844 562.65
++ U1      1     17533 6863395 562.90
++ NW      1      7312 6873615 562.97
+
+Step:  AIC=532.94
+Crime ~ Po1
+
+         Df Sum of Sq     RSS    AIC
++ Ineq    1    739819 2887807 524.22
++ M       1    616741 3010885 526.18
++ M.F     1    250522 3377104 531.57
++ NW      1    232434 3395192 531.82
++ So      1    219098 3408528 532.01
++ Wealth  1    180872 3446754 532.53
+<none>                3627626 532.94
++ Po2     1    146167 3481459 533.00
++ Prob    1     92278 3535348 533.72
++ LF      1     77479 3550147 533.92
++ Time    1     43185 3584441 534.37
++ U2      1     17848 3609778 534.70
++ Pop     1      5666 3621959 534.86
++ U1      1      2878 3624748 534.90
++ Ed      1       767 3626859 534.93
+
+Step:  AIC=524.22
+Crime ~ Po1 + Ineq
+
+> summary(sw)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-703.87 -121.81  -14.56  154.55  506.45 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  -944.66     343.95  -2.747  0.00869 ** 
+Po1           124.15      16.37   7.582 1.62e-09 ***
+Ineq           40.95      12.20   3.357  0.00163 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 256.2 on 44 degrees of freedom
+Multiple R-squared:  0.5803,	Adjusted R-squared:  0.5612 
+F-statistic: 30.42 on 2 and 44 DF,  p-value: 5.061e-09
+
+> sw1 = step(
++   sw,
++   scope = list(lower = sw$terms, upper = full),
++   direction = "forward",
++   steps = 1
++ )
+Start:  AIC=524.22
+Crime ~ Po1 + Ineq
+
+         Df Sum of Sq     RSS    AIC
++ Ed      1    587050 2300757 515.53
++ M.F     1    454545 2433262 518.17
++ Prob    1    280690 2607117 521.41
++ LF      1    260571 2627236 521.77
++ Wealth  1    213937 2673871 522.60
++ M       1    181236 2706571 523.17
++ Pop     1    130377 2757430 524.04
+<none>                2887807 524.22
++ NW      1     36439 2851369 525.62
++ So      1     33738 2854069 525.66
++ Po2     1     30673 2857134 525.71
++ U1      1      2309 2885498 526.18
++ Time    1       497 2887310 526.21
++ U2      1       253 2887554 526.21
+
+Step:  AIC=515.53
+Crime ~ Po1 + Ineq + Ed
+
+> summary(sw1)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-590.30 -102.06   -1.73  129.16  511.60 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -3275.41     769.14  -4.259  0.00011 ***
+Po1           124.31      14.79   8.408 1.26e-10 ***
+Ineq           75.06      15.08   4.978 1.09e-05 ***
+Ed            157.87      47.66   3.312  0.00188 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 231.3 on 43 degrees of freedom
+Multiple R-squared:  0.6656,	Adjusted R-squared:  0.6423 
+F-statistic: 28.53 on 3 and 43 DF,  p-value: 2.59e-10
+
+> sw2 = step(
++   sw1,
++   scope = list(lower = sw1$terms, upper = full),
++   direction = "forward",
++   steps = 1
++ )
+Start:  AIC=515.53
+Crime ~ Po1 + Ineq + Ed
+
+         Df Sum of Sq     RSS    AIC
++ M       1    239405 2061353 512.37
++ Prob    1    234981 2065776 512.47
++ M.F     1    117026 2183731 515.08
+<none>                2300757 515.53
++ Wealth  1     79540 2221218 515.88
++ U2      1     62112 2238646 516.25
++ Time    1     61770 2238987 516.26
++ Po2     1     42584 2258174 516.66
++ Pop     1     39319 2261438 516.72
++ U1      1      7365 2293392 517.38
++ LF      1      7254 2293503 517.39
++ NW      1      4210 2296547 517.45
++ So      1      4135 2296622 517.45
+
+Step:  AIC=512.37
+Crime ~ Po1 + Ineq + Ed + M
+
+> summary(sw2)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed + M, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-530.93  -91.88    7.56  137.72  576.84 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4249.22     858.51  -4.950 1.25e-05 ***
+Po1           129.80      14.38   9.029 2.16e-11 ***
+Ineq           64.09      15.27   4.197 0.000137 ***
+Ed            166.05      45.80   3.626 0.000773 ***
+M              76.02      34.42   2.209 0.032714 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 221.5 on 42 degrees of freedom
+Multiple R-squared:  0.7004,	Adjusted R-squared:  0.6719 
+F-statistic: 24.55 on 4 and 42 DF,  p-value: 1.595e-10
+
+> sw3 = step(
++   sw2,
++   scope = list(lower = sw2$terms, upper = full),
++   direction = "forward",
++   steps = 1
++ )
+Start:  AIC=512.37
+Crime ~ Po1 + Ineq + Ed + M
+
+         Df Sum of Sq     RSS    AIC
++ Prob    1    258063 1803290 508.08
++ U2      1    200988 1860365 509.55
++ Wealth  1    163378 1897975 510.49
+<none>                2061353 512.37
++ M.F     1     74398 1986955 512.64
++ U1      1     50835 2010518 513.20
++ Po2     1     45392 2015961 513.32
++ Time    1     42746 2018607 513.39
++ NW      1     16488 2044865 513.99
++ Pop     1      8101 2053251 514.19
++ So      1      3189 2058164 514.30
++ LF      1      2988 2058365 514.30
+
+Step:  AIC=508.08
+Crime ~ Po1 + Ineq + Ed + M + Prob
+
+> summary(sw3)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed + M + Prob, data = mydata)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-528.2  -74.0   -7.0  139.8  503.3 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4064.57     816.28  -4.979 1.20e-05 ***
+Po1           121.23      14.06   8.621 9.47e-11 ***
+Ineq           68.31      14.56   4.692 3.00e-05 ***
+Ed            160.15      43.42   3.688 0.000656 ***
+M              79.69      32.62   2.443 0.018964 *  
+Prob        -3867.27    1596.55  -2.422 0.019930 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 209.7 on 41 degrees of freedom
+Multiple R-squared:  0.7379,	Adjusted R-squared:  0.706 
+F-statistic: 23.09 on 5 and 41 DF,  p-value: 5.926e-11
+
+> sw4 = step(
++   sw3,
++   scope = list(lower = sw3$terms, upper = full),
++   direction = "forward",
++   steps = 1
++ )
+Start:  AIC=508.08
+Crime ~ Po1 + Ineq + Ed + M + Prob
+
+         Df Sum of Sq     RSS    AIC
++ U2      1    192233 1611057 504.79
++ Wealth  1     86490 1716801 507.77
++ M.F     1     84509 1718781 507.83
+<none>                1803290 508.08
++ U1      1     52313 1750977 508.70
++ Pop     1     47719 1755571 508.82
++ Po2     1     37967 1765323 509.08
++ So      1     21971 1781320 509.51
++ Time    1     10194 1793096 509.82
++ LF      1       990 1802301 510.06
++ NW      1       797 1802493 510.06
+
+Step:  AIC=504.79
+Crime ~ Po1 + Ineq + Ed + M + Prob + U2
+
+> summary(sw4)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed + M + Prob + U2, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-470.68  -78.41  -19.68  133.12  556.23 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5040.50     899.84  -5.602 1.72e-06 ***
+Po1           115.02      13.75   8.363 2.56e-10 ***
+Ineq           67.65      13.94   4.855 1.88e-05 ***
+Ed            196.47      44.75   4.390 8.07e-05 ***
+M             105.02      33.30   3.154  0.00305 ** 
+Prob        -3801.84    1528.10  -2.488  0.01711 *  
+U2             89.37      40.91   2.185  0.03483 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 200.7 on 40 degrees of freedom
+Multiple R-squared:  0.7659,	Adjusted R-squared:  0.7307 
+F-statistic: 21.81 on 6 and 40 DF,  p-value: 3.418e-11
+
+> sw5 = step(
++   sw4,
++   scope = list(lower = sw4$terms, upper = full),
++   direction = "forward",
++   steps = 1
++ )
+Start:  AIC=504.79
+Crime ~ Po1 + Ineq + Ed + M + Prob + U2
+
+         Df Sum of Sq     RSS    AIC
+<none>                1611057 504.79
++ Wealth  1     59910 1551147 505.00
++ U1      1     54830 1556227 505.16
++ Pop     1     51320 1559737 505.26
++ M.F     1     30945 1580112 505.87
++ Po2     1     25017 1586040 506.05
++ So      1     17958 1593098 506.26
++ LF      1     13179 1597878 506.40
++ Time    1      7159 1603898 506.58
++ NW      1       359 1610698 506.78
+> summary(sw5)
+
+Call:
+lm(formula = Crime ~ Po1 + Ineq + Ed + M + Prob + U2, data = mydata)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-470.68  -78.41  -19.68  133.12  556.23 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5040.50     899.84  -5.602 1.72e-06 ***
+Po1           115.02      13.75   8.363 2.56e-10 ***
+Ineq           67.65      13.94   4.855 1.88e-05 ***
+Ed            196.47      44.75   4.390 8.07e-05 ***
+M             105.02      33.30   3.154  0.00305 ** 
+Prob        -3801.84    1528.10  -2.488  0.01711 *  
+U2             89.37      40.91   2.185  0.03483 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 200.7 on 40 degrees of freedom
+Multiple R-squared:  0.7659,	Adjusted R-squared:  0.7307 
+F-statistic: 21.81 on 6 and 40 DF,  p-value: 3.418e-11
+
+> # No factors needed to be removed, so it appears using the step() function is the way to go
+> # in the future.  Double check that the coefficients are the same:
+> stepped$coefficients
+(Intercept)         Po1        Ineq          Ed           M        Prob          U2 
+-5040.50498   115.02419    67.65322   196.47120   105.01957 -3801.83628    89.36604 
+> sw5$coefficients
+(Intercept)         Po1        Ineq          Ed           M        Prob          U2 
+-5040.50498   115.02419    67.65322   196.47120   105.01957 -3801.83628    89.36604 

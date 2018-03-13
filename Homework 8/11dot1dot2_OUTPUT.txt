@@ -1,0 +1,148 @@
+> set.seed(1)
+> 
+> #install.packages("glmnet")
+> 
+> library(glmnet)
+> library(stats)
+> 
+> mydata = as.data.frame(read.table("uscrime.txt", header = TRUE)) #read in data
+> sc_data = as.matrix(mydata)
+> for (i in 1:15) {
++   #scale predictors
++   sc_data[, i] = (mydata[, i] - min(mydata[, i])) / (max(mydata[, i]) -
++                                                        min(mydata[, i]))
++ }
+> predictors = sc_data[,1:15]
+> response = sc_data[, 16]
+> 
+> lasso = cv.glmnet(
++   predictors,
++   response,
++   family = "gaussian",
++   alpha = 1,
++   nfolds = 5,
++   type.measure = "mse"
++ )
+> lasso$lambda.min
+[1] 4.388696
+> lasso$lambda.1se
+[1] 33.98008
+> plot(lasso)
+> coef(lasso, s = lasso$lambda.min)
+16 x 1 sparse Matrix of class "dgCMatrix"
+                     1
+(Intercept) -483.35043
+M            469.88508
+So            34.24302
+Ed           526.94068
+Po1         1210.52937
+Po2            .      
+LF             .      
+M.F          248.14372
+Pop          -62.41065
+NW            52.20859
+U1          -259.51651
+U2           487.08970
+Wealth       185.40526
+Ineq         898.79317
+Prob        -436.95775
+Time           .      
+> coef(lasso, s = lasso$lambda.1se)
+16 x 1 sparse Matrix of class "dgCMatrix"
+                    1
+(Intercept)  345.6484
+M            192.0794
+So             .     
+Ed             .     
+Po1         1118.8669
+Po2            .     
+LF             .     
+M.F          233.2874
+Pop            .     
+NW             .     
+U1             .     
+U2             .     
+Wealth         .     
+Ineq         276.8265
+Prob        -236.6188
+Time           .     
+> 
+> 
+> r = nrow(sc_data)
+> set = sample(1:r, size = round(r * .8), replace = FALSE)
+> train = sc_data[set,]
+> test = sc_data[-set,]
+> 
+> # Using the lambda.min model:
+> model = lm(Crime~M+So+Ed+Po1+U2+Ineq+Prob+Time, as.data.frame(train))
+> summary(model)
+
+Call:
+lm(formula = Crime ~ M + So + Ed + Po1 + U2 + Ineq + Prob + Time, 
+    data = as.data.frame(train))
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-429.07  -95.23  -31.06  103.29  641.10 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   -226.0      352.0  -0.642  0.52598    
+M              394.7      245.6   1.607  0.11891    
+So             117.6      131.1   0.898  0.37673    
+Ed             641.7      216.6   2.962  0.00604 ** 
+Po1           1149.9      233.4   4.927 3.11e-05 ***
+U2             264.7      175.9   1.505  0.14319    
+Ineq           975.7      297.2   3.283  0.00268 ** 
+Prob          -719.8      331.2  -2.173  0.03806 *  
+Time          -171.8      202.3  -0.849  0.40277    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 209.7 on 29 degrees of freedom
+Multiple R-squared:  0.7177,	Adjusted R-squared:  0.6398 
+F-statistic: 9.217 on 8 and 29 DF,  p-value: 3.228e-06
+
+> pred = predict.lm(model, as.data.frame(test))
+> sse = sum((pred - test[,16]) ^ 2)
+> sst = sum((test[,16] - mean(test[,16])) ^ 2) #total sum of squares
+> 1 - sse / sst
+[1] 0.7594991
+> 
+> 
+> # Using the .1se model, which is the largest value of lambda
+> # such that error is within 1 standard error of the minimum:
+> modelse = lm(Crime~M+So+Ed+Po1+M.F+Ineq+Prob, as.data.frame(train))
+> summary(modelse)
+
+Call:
+lm(formula = Crime ~ M + So + Ed + Po1 + M.F + Ineq + Prob, data = as.data.frame(train))
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-383.58  -89.16   -8.52   97.84  546.41 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   -149.1      279.3  -0.534   0.5973    
+M              196.1      227.8   0.861   0.3961    
+So             164.3      132.2   1.243   0.2233    
+Ed             454.6      239.7   1.897   0.0675 .  
+Po1           1237.8      243.7   5.079 1.86e-05 ***
+M.F            236.5      253.8   0.932   0.3588    
+Ineq           814.2      311.5   2.614   0.0139 *  
+Prob          -552.4      293.0  -1.885   0.0691 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 213.8 on 30 degrees of freedom
+Multiple R-squared:  0.6965,	Adjusted R-squared:  0.6257 
+F-statistic: 9.835 on 7 and 30 DF,  p-value: 2.554e-06
+
+> predse = predict.lm(modelse, as.data.frame(test))
+> ssese = sum((predse - test[,16]) ^ 2)
+> sstse = sum((test[,16] - mean(test[,16])) ^ 2) #total sum of squares
+> 1 - ssese / sstse
+[1] 0.7986854
+> 
+> # The .1se model is slightly better, but both should be considered good quality.
