@@ -64,7 +64,6 @@ summary(m1)
 m2 = lm(BareNuclei ~ MarginalAdhesion + NormalNucleoli + Class, newdata) #New model using best factors
 summary(m2) #Still not a good p-value, but we'll use it
 
-m3 = perturb(m2)
 
 imputed_data = mydata
 
